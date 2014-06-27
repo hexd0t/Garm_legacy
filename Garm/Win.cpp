@@ -65,6 +65,10 @@ HWND Garm::Win32::CreateOutputWindow( const std::wstring& title )
 
 	if (!window)
 		throw std::runtime_error( "Unable to create window" );
+
+	ShowWindow( window, SW_SHOW );
+	SetForegroundWindow( window );
+	SetFocus( window );
 	
 	return window;
 }

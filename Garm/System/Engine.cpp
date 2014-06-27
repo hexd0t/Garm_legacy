@@ -3,7 +3,7 @@
 
 using Garm::System::Engine;
 
-Engine::Engine() : World(new Garm::Data::World())
+Engine::Engine() : World(), Graphics()
 {
 
 }
@@ -16,8 +16,11 @@ Engine::~Engine()
 void Engine::Run()
 {
 	HWND window = Garm::Win32::CreateOutputWindow( L"Garm workbench" );
+
+	Graphics.reset( new Garm::System::Render::Graphics() );
+
 	while (Garm::Win32::GetMessages())
 	{
-
+		Graphics->Render();
 	}
 }

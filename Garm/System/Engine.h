@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "../Data/World.h"
+#include "Render/Graphics.h"
 
 using std::shared_ptr;
 
@@ -17,6 +18,7 @@ namespace Garm
 			virtual ~Engine();
 
 			shared_ptr<Garm::Data::World> World;
+			shared_ptr<Garm::System::Render::Graphics> Graphics;
 
 			void Run();
 		};

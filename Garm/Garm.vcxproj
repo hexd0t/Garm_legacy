@@ -91,6 +91,7 @@
     <ClCompile Include="Data\PhysicsEntity.cpp" />
     <ClCompile Include="Data\PhysicsEntity.h" />
     <ClCompile Include="System\Engine.cpp" />
+    <ClCompile Include="System\Render\Graphics.cpp" />
     <ClCompile Include="Win.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
@@ -98,6 +99,7 @@
     <ClInclude Include="Data\World.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="System\Engine.h" />
+    <ClInclude Include="System\Render\Graphics.h" />
     <ClInclude Include="Win.h" />
     <ClInclude Include="TypeDefs.h" />
   </ItemGroup>
