@@ -7,6 +7,11 @@ int wmain(int argc, wchar_t *argv[], wchar_t *envp[])
 	try
 	{
 		std::cout << "Garm Build " __TIMESTAMP__ << std::endl;
+
+		Garm::System::Engine engine;
+
+		engine.Run();
+
 		std::cin.get();
 	}
 	catch (std::exception& ex)
