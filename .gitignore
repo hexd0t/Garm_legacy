@@ -1,0 +1,5 @@
+*.filters
+*.idb
+*/Debug/
+*.opensdf
+*.sdf
