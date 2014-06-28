@@ -41,7 +41,7 @@ HWND Garm::Win32::CreateOutputWindow( const std::wstring& title )
 		GetModuleHandle( 0 ),
 		LoadIcon( 0, IDI_APPLICATION ),
 		LoadCursor( 0, IDC_ARROW ),
-		HBRUSH( COLOR_WINDOW + 1 ), // ToDo: test 0
+		0, //HBRUSH( COLOR_WINDOW + 1 ), // ToDo: test 0
 		0,
 		myclass,
 		LoadIcon( 0, IDI_APPLICATION )
@@ -56,8 +56,8 @@ HWND Garm::Win32::CreateOutputWindow( const std::wstring& title )
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
+		1024,
+		768,
 		0,
 		0,
 		GetModuleHandle( 0 ),

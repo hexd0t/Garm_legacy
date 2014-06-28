@@ -17,7 +17,7 @@ void Engine::Run()
 {
 	HWND window = Garm::Win32::CreateOutputWindow( L"Garm workbench" );
 
-	Graphics.reset( new Garm::System::Render::Graphics() );
+	Graphics = shared_ptr<Garm::System::Render::Graphics>( new Garm::System::Render::Graphics( window ) );
 
 	while (Garm::Win32::GetMessages())
 	{

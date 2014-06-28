@@ -6,6 +6,7 @@
 #include <dxgi.h>
 #include <d3dcommon.h>
 #include <d3d11.h>
+#include <DirectXMath.h>
 
 namespace Garm
 {
@@ -37,6 +38,16 @@ namespace Garm
 				ID3D11ShaderResourceView* srvDiffuse;
 				ID3D11ShaderResourceView* srvNormal;
 				ID3D11ShaderResourceView* srvDepthBuffer;
+
+				// Render states
+				ID3D11DepthStencilState* depthStencilState;
+				ID3D11RasterizerState* rasterState;
+
+				// Initialization functions
+				void createDeviceSwapchain( const HWND& window );
+				void createGBuffer(int width, int height);
+				void createGBuffer_textures(int width, int height);
+				void createGBuffer_views();
 			};
 		}
 	}
