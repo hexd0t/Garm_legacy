@@ -8,6 +8,8 @@
 #include <d3d11.h>
 #include <DirectXMath.h>
 
+using DirectX::XMMATRIX;
+
 namespace Garm
 {
 	namespace System
@@ -32,8 +34,7 @@ namespace Garm
 				ID3D11Texture2D* texDepthBuffer;
 				ID3D11Texture2D* texDiffuse;
 				ID3D11Texture2D* texNormal;
-				ID3D11RenderTargetView* rtvDiffuse;
-				ID3D11RenderTargetView* rtvNormal;
+				ID3D11RenderTargetView* renderTargetViews[2];
 				ID3D11DepthStencilView* dsvDepthBuffer;
 				ID3D11ShaderResourceView* srvDiffuse;
 				ID3D11ShaderResourceView* srvNormal;
@@ -42,12 +43,21 @@ namespace Garm
 				// Render states
 				ID3D11DepthStencilState* depthStencilState;
 				ID3D11RasterizerState* rasterState;
+				D3D11_VIEWPORT viewport;
+				XMMATRIX matProjection;
+				XMMATRIX matView;
 
 				// Initialization functions
 				void createDeviceSwapchain( const HWND& window );
 				void createGBuffer(int width, int height);
 				void createGBuffer_textures(int width, int height);
 				void createGBuffer_views();
+				void createRenderState();
+
+				// Shutdown functions
+				void releaseRenderState();
+				void releaseGBuffer();
+				void releaseDeviceSwapchain();
 			};
 		}
 	}
