@@ -7,8 +7,12 @@
 #include <d3dcommon.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <memory>
+#include "../../TypeDefs.h"
 
 using DirectX::XMMATRIX;
+using DirectX::XMFLOAT3;
+using DirectX::XMFLOAT2;
 
 namespace Garm
 {
@@ -47,14 +51,33 @@ namespace Garm
 				XMMATRIX matProjection;
 				XMMATRIX matView;
 
+				// Shader & fullscreen Quad
+				ID3D11PixelShader* scenePS;
+				ID3D11VertexShader* sceneVS;
+				ID3D11InputLayout* sceneInputLayout;
+				ID3D11PixelShader* composePS;
+				ID3D11VertexShader* composeVS;
+				ID3D11InputLayout* composeInputLayout;
+				ID3D11Buffer* fullscreenQuad;
+				struct ComposeVertexType
+				{
+					XMFLOAT3 pos;
+					XMFLOAT2 tex;
+				};
+
 				// Initialization functions
 				void createDeviceSwapchain( const HWND& window );
 				void createGBuffer(int width, int height);
 				void createGBuffer_textures(int width, int height);
 				void createGBuffer_views();
 				void createRenderState();
+				void createShader();
+				void createShader_scene();
+				void createShader_compose();
+				void createShader_fullscreenQuad();
 
 				// Shutdown functions
+				void releaseShader();
 				void releaseRenderState();
 				void releaseGBuffer();
 				void releaseDeviceSwapchain();

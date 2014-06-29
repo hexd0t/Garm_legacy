@@ -1,6 +1,6 @@
 *.filters
 *.idb
-*/Debug/
 *.opensdf
 *.sdf
-*/*/Debug/
+*/x64/
+x64/
