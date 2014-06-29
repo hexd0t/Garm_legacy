@@ -30,6 +30,8 @@ Graphics::Graphics( const HWND& window )
 
 Graphics::~Graphics()
 {
+	releaseShader();
+	releaseRenderState();
 	releaseGBuffer();
 	releaseDeviceSwapchain();
 }
@@ -39,12 +41,14 @@ void Graphics::Render()
 	immediateContext->RSSetState( rasterState );
 	immediateContext->RSSetViewports( 1, &viewport );
 	float clearcolor[4] = { 1.0f, 0.0f, 1.0f, 1.0f };
+	float clearcolor2[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
 
 	// G-Buffer
 	immediateContext->OMSetRenderTargets( 2, renderTargetViews, dsvDepthBuffer );
 	immediateContext->OMSetDepthStencilState( depthStencilState, 1 );
 	immediateContext->ClearDepthStencilView( dsvDepthBuffer, D3D11_CLEAR_DEPTH, 1.0f, 0 );
-	immediateContext->ClearRenderTargetView( renderTargetViews[0], clearcolor );
+	immediateContext->ClearRenderTargetView( renderTargetViews[0], clearcolor2 );
+	immediateContext->ClearRenderTargetView( renderTargetViews[1], clearcolor );
 
 	// Screen Output
 	immediateContext->OMSetRenderTargets( 1, &screenRenderTarget, 0 );
@@ -53,12 +57,19 @@ void Graphics::Render()
 	immediateContext->VSSetShader( composeVS, NULL, 0 );
 	immediateContext->PSSetShader( composePS, NULL, 0 );
 
-	unsigned int stride = sizeof( ComposeVertexType );
+	immediateContext->PSSetSamplers( 0, 1, &composeSampler );
+	immediateContext->PSSetShaderResources( 0, 1, &shaderResourceView[0] );
+	immediateContext->PSSetShaderResources( 1, 1, &shaderResourceView[1] );
+
+	unsigned int stride = sizeof(ComposeVertexType);
 	unsigned int offset = 0U;
 	immediateContext->IASetVertexBuffers( 0, 1, &fullscreenQuad, &stride, &offset );
 	immediateContext->IASetPrimitiveTopology( D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP );
 
 	immediateContext->Draw( 4, 0 );
+
+	ID3D11ShaderResourceView* unbind[3] = { 0, 0, 0 };
+	immediateContext->PSSetShaderResources( 0, 3, unbind );
 
 	swapChain->Present( 0, 0 );
 }
@@ -67,7 +78,7 @@ void Graphics::createDeviceSwapchain( const HWND& window )
 {
 	HRESULT result = 0;
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
-	ZeroMemory( &swapChainDesc, sizeof( swapChainDesc ) );
+	ZeroMemory( &swapChainDesc, sizeof(swapChainDesc) );
 
 	swapChainDesc.BufferCount = 1;
 	swapChainDesc.BufferDesc.Width = 1024;
@@ -91,19 +102,19 @@ void Graphics::createDeviceSwapchain( const HWND& window )
 	result = D3D11CreateDeviceAndSwapChain( NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, &featureLevel, 1,
 		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext );
 #else
-	result = D3D11CreateDeviceAndSwapChain( NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1,
-		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext );
+	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1,
+		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext);
 #endif
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create D3D device @" __FILE__ ":" S__LINE__ );
 
 	ID3D11Texture2D* backBufferPtr;
 	result = swapChain->GetBuffer( 0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferPtr );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to get SwapChain buffer texture @" __FILE__ ":" S__LINE__ );
 
 	result = device->CreateRenderTargetView( backBufferPtr, NULL, &screenRenderTarget );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create screen render target @" __FILE__ ":" S__LINE__ );
 
 	backBufferPtr->Release();
@@ -112,7 +123,7 @@ void Graphics::createDeviceSwapchain( const HWND& window )
 
 void Graphics::createGBuffer( int width, int height )
 {
-	createGBuffer_textures(width, height);
+	createGBuffer_textures( width, height );
 	createGBuffer_views();
 }
 
@@ -120,7 +131,7 @@ void Graphics::createGBuffer_textures( int width, int height )
 {
 	HRESULT result = 0;
 	D3D11_TEXTURE2D_DESC textureDesc;
-	ZeroMemory( &textureDesc, sizeof( textureDesc ) );
+	ZeroMemory( &textureDesc, sizeof(textureDesc) );
 
 	textureDesc.ArraySize = 1;
 	textureDesc.MipLevels = 1;
@@ -136,21 +147,21 @@ void Graphics::createGBuffer_textures( int width, int height )
 	textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 
 	result = device->CreateTexture2D( &textureDesc, NULL, &texDepthBuffer );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create depth buffer texture @" __FILE__ ":" S__LINE__ );
 
 	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
 	result = device->CreateTexture2D( &textureDesc, NULL, &texDiffuse );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create diffuse texture @" __FILE__ ":" S__LINE__ );
 
 	textureDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 
 	result = device->CreateTexture2D( &textureDesc, NULL, &texNormal );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create normal texture @" __FILE__ ":" S__LINE__ );
 }
 
@@ -159,73 +170,73 @@ void Graphics::createGBuffer_views()
 	// ==== DepthStencil ====
 	HRESULT result = 0;
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc;
-	ZeroMemory( &depthStencilViewDesc, sizeof( depthStencilViewDesc ) );
+	ZeroMemory( &depthStencilViewDesc, sizeof(depthStencilViewDesc) );
 
 	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	depthStencilViewDesc.Texture2D.MipSlice = 0;
 
 	result = device->CreateDepthStencilView( texDepthBuffer, &depthStencilViewDesc, &dsvDepthBuffer );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create depth stencil view @" __FILE__ ":" S__LINE__ );
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-	ZeroMemory( &srvDesc, sizeof( srvDesc ) );
+	ZeroMemory( &srvDesc, sizeof(srvDesc) );
 
 	srvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 
-	result = device->CreateShaderResourceView( texDepthBuffer, &srvDesc, &srvDepthBuffer );
-	if (FAILED( result ))
+	result = device->CreateShaderResourceView( texDepthBuffer, &srvDesc, &shaderResourceView[2] );
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create depth stencil shader resource view @" __FILE__ ":" S__LINE__ );
 
 	// ==== Normal ====
 
 	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-	ZeroMemory( &rtvDesc, sizeof( rtvDesc ) );
+	ZeroMemory( &rtvDesc, sizeof(rtvDesc) );
 
 	rtvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
 
 	result = device->CreateRenderTargetView( texNormal, &rtvDesc, &renderTargetViews[1] );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create normal render target view @" __FILE__ ":" S__LINE__ );
 
-	ZeroMemory( &srvDesc, sizeof( srvDesc ) );
+	ZeroMemory( &srvDesc, sizeof(srvDesc) );
 
 	srvDesc.Format = DXGI_FORMAT_R16G16B16A16_FLOAT;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 
-	result = device->CreateShaderResourceView( texNormal, &srvDesc, &srvNormal );
-	if (FAILED( result ))
+	result = device->CreateShaderResourceView( texNormal, &srvDesc, &shaderResourceView[1] );
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create normal shader resource view @" __FILE__ ":" S__LINE__ );
 
 	// ==== Diffuse ====
 
-	ZeroMemory( &rtvDesc, sizeof( rtvDesc ) );
+	ZeroMemory( &rtvDesc, sizeof(rtvDesc) );
 
 	rtvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 	rtvDesc.Texture2D.MipSlice = 0;
 
 	result = device->CreateRenderTargetView( texDiffuse, &rtvDesc, &renderTargetViews[0] );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create diffuse render target view @" __FILE__ ":" S__LINE__ );
 
-	ZeroMemory( &srvDesc, sizeof( srvDesc ) );
+	ZeroMemory( &srvDesc, sizeof(srvDesc) );
 
 	srvDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	srvDesc.Texture2D.MipLevels = 1;
 	srvDesc.Texture2D.MostDetailedMip = 0;
 
-	result = device->CreateShaderResourceView( texDiffuse, &srvDesc, &srvDiffuse );
-	if (FAILED( result ))
+	result = device->CreateShaderResourceView( texDiffuse, &srvDesc, &shaderResourceView[0] );
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create diffuse shader resource view @" __FILE__ ":" S__LINE__ );
 }
 
@@ -233,7 +244,7 @@ void Graphics::createRenderState()
 {
 	HRESULT result = 0;
 	D3D11_DEPTH_STENCIL_DESC depthStencilDesc;
-	ZeroMemory( &depthStencilDesc, sizeof( depthStencilDesc ) );
+	ZeroMemory( &depthStencilDesc, sizeof(depthStencilDesc) );
 
 	depthStencilDesc.DepthEnable = true;
 	depthStencilDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
@@ -253,7 +264,7 @@ void Graphics::createRenderState()
 
 
 	result = device->CreateDepthStencilState( &depthStencilDesc, &depthStencilState );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create depth stencil state @" __FILE__ ":" S__LINE__ );
 
 	D3D11_RASTERIZER_DESC rasterDesc;
@@ -269,7 +280,7 @@ void Graphics::createRenderState()
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
 	result = device->CreateRasterizerState( &rasterDesc, &rasterState );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create rasterizer state @" __FILE__ ":" S__LINE__ );
 }
 
@@ -288,25 +299,25 @@ void Graphics::createShader_scene()
 	// ==== Scene Pixel Shader ====
 
 	std::ifstream fileStream( L"ScenePS.cso", std::ifstream::binary );
-	if (!fileStream)
+	if ( !fileStream )
 		throw std::runtime_error( "Unable to open scene ps shader file @" __FILE__ ":" S__LINE__ );
 
 	fileStream.seekg( 0, std::ifstream::end );
 	int fileSize = static_cast<int>(fileStream.tellg());
 	fileStream.seekg( 0 );
 
-	std::unique_ptr<char[]> fileContent( new char[fileSize]);
+	std::unique_ptr<char[]> fileContent( new char[fileSize] );
 	fileStream.read( fileContent.get(), fileSize );
 	fileStream.close();
 
 	result = device->CreatePixelShader( fileContent.get(), fileSize, NULL, &scenePS );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create scene ps @" __FILE__ ":" S__LINE__ );
 
 	// ==== Scene Vertex Shader ====
 
 	fileStream = std::ifstream( L"SceneVS.cso", std::ifstream::binary );
-	if (!fileStream)
+	if ( !fileStream )
 		throw std::runtime_error( "Unable to open scene vs shader file @" __FILE__ ":" S__LINE__ );
 
 	fileStream.seekg( 0, std::ifstream::end );
@@ -318,7 +329,7 @@ void Graphics::createShader_scene()
 	fileStream.close();
 
 	result = device->CreateVertexShader( fileContent.get(), fileSize, NULL, &sceneVS );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create scene vs @" __FILE__ ":" S__LINE__ );
 
 	// ==== Vertex Layout ====
@@ -341,7 +352,7 @@ void Graphics::createShader_scene()
 	polygonLayout[1].InstanceDataStepRate = 0;
 
 	result = device->CreateInputLayout( polygonLayout, 2, fileContent.get(), fileSize, &sceneInputLayout );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create scene input layout @" __FILE__ ":" S__LINE__ );
 
 }
@@ -354,7 +365,7 @@ void Graphics::createShader_compose()
 	// ==== Compose Pixel Shader ====
 
 	std::ifstream fileStream( L"ComposePS.cso", std::ifstream::binary );
-	if (!fileStream)
+	if ( !fileStream )
 		throw std::runtime_error( "Unable to open compose ps shader file @" __FILE__ ":" S__LINE__ );
 
 	fileStream.seekg( 0, std::ifstream::end );
@@ -366,13 +377,13 @@ void Graphics::createShader_compose()
 	fileStream.close();
 
 	result = device->CreatePixelShader( fileContent.get(), fileSize, NULL, &composePS );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create compose ps @" __FILE__ ":" S__LINE__ );
 
 	// ==== Compose Vertex Shader ====
 
 	fileStream = std::ifstream( L"ComposeVS.cso", std::ifstream::binary );
-	if (!fileStream)
+	if ( !fileStream )
 		throw std::runtime_error( "Unable to open compose vs shader file @" __FILE__ ":" S__LINE__ );
 
 	fileStream.seekg( 0, std::ifstream::end );
@@ -384,7 +395,7 @@ void Graphics::createShader_compose()
 	fileStream.close();
 
 	result = device->CreateVertexShader( fileContent.get(), fileSize, NULL, &composeVS );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create compose vs @" __FILE__ ":" S__LINE__ );
 
 	// ==== Vertex Layout ====
@@ -407,7 +418,7 @@ void Graphics::createShader_compose()
 	polygonLayout[1].InstanceDataStepRate = 0;
 
 	result = device->CreateInputLayout( polygonLayout, 2, fileContent.get(), fileSize, &composeInputLayout );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create compose input layout @" __FILE__ ":" S__LINE__ );
 
 }
@@ -418,20 +429,20 @@ void Graphics::createShader_fullscreenQuad()
 
 	D3D11_BUFFER_DESC bufferDesc;
 	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof( ComposeVertexType ) * 4;
+	bufferDesc.ByteWidth = sizeof(ComposeVertexType)* 4;
 	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	bufferDesc.CPUAccessFlags = 0;
 	bufferDesc.MiscFlags = 0;
 	bufferDesc.StructureByteStride = 0;
 
 	std::unique_ptr<ComposeVertexType[]> vertices( new ComposeVertexType[4] );
-	vertices[0].pos = XMFLOAT3( -1.0f,  1.0f, 0.5f );
+	vertices[0].pos = XMFLOAT3( -1.0f, 1.0f, 0.5f );
 	vertices[0].tex = XMFLOAT2( 0.0f, 0.0f );
-	vertices[1].pos = XMFLOAT3(  1.0f,  1.0f, 0.5f );
+	vertices[1].pos = XMFLOAT3( 1.0f, 1.0f, 0.5f );
 	vertices[1].tex = XMFLOAT2( 1.0f, 0.0f );
 	vertices[2].pos = XMFLOAT3( -1.0f, -1.0f, 0.5f );
 	vertices[2].tex = XMFLOAT2( 0.0f, 1.0f );
-	vertices[3].pos = XMFLOAT3(  1.0f, -1.0f, 0.5f );
+	vertices[3].pos = XMFLOAT3( 1.0f, -1.0f, 0.5f );
 	vertices[3].tex = XMFLOAT2( 1.0f, 1.0f );
 
 	D3D11_SUBRESOURCE_DATA vertexData;
@@ -440,91 +451,109 @@ void Graphics::createShader_fullscreenQuad()
 	vertexData.SysMemSlicePitch = 0;
 
 	result = device->CreateBuffer( &bufferDesc, &vertexData, &fullscreenQuad );
-	if (FAILED( result ))
+	if ( FAILED( result ) )
 		throw std::runtime_error( "Unable to create fullscreen quad vertex buffer @" __FILE__ ":" S__LINE__ );
-		
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	result = device->CreateSamplerState( &samplerDesc, &composeSampler );
+	if ( FAILED( result ) )
+		throw std::runtime_error( "Unable to create compose texture sampler @" __FILE__ ":" S__LINE__ );
 }
 
 void Graphics::releaseShader()
 {
-	if (fullscreenQuad)
+	if ( fullscreenQuad )
 		fullscreenQuad->Release();
 	fullscreenQuad = 0;
 
-	if (composeInputLayout)
+	if ( composeInputLayout )
 		composeInputLayout->Release();
 	composeInputLayout = 0;
-	if (composePS)
+	if ( composePS )
 		composePS->Release();
 	composePS = 0;
-	if (composeVS)
+	if ( composeVS )
 		composeVS->Release();
 	composeVS = 0;
 
-	if (sceneInputLayout)
+	if ( sceneInputLayout )
 		sceneInputLayout->Release();
 	sceneInputLayout = 0;
-	if (scenePS)
+	if ( scenePS )
 		scenePS->Release();
 	scenePS = 0;
-	if (sceneVS)
+	if ( sceneVS )
 		sceneVS->Release();
 	sceneVS = 0;
 }
 
 void Graphics::releaseRenderState()
 {
-	if (rasterState)
+	if ( rasterState )
 		rasterState->Release();
 	rasterState = 0;
-	if (depthStencilState)
+	if ( depthStencilState )
 		depthStencilState->Release();
 	depthStencilState = 0;
 }
 
 void Graphics::releaseGBuffer()
 {
-	if (srvDiffuse)
-		srvDiffuse->Release();
-	srvDiffuse = 0;
-	if (renderTargetViews[0])
+	if ( shaderResourceView[0] )
+		shaderResourceView[0]->Release();
+	shaderResourceView[0] = 0;
+	if ( renderTargetViews[0] )
 		renderTargetViews[0]->Release();
 	renderTargetViews[0] = 0;
-	if (srvNormal)
-		srvNormal->Release();
-	srvNormal = 0;
-	if (renderTargetViews[1])
+	if ( shaderResourceView[1] )
+		shaderResourceView[1]->Release();
+	shaderResourceView[1] = 0;
+	if ( renderTargetViews[1] )
 		renderTargetViews[1]->Release();
 	renderTargetViews[1] = 0;
-	if (dsvDepthBuffer)
+	if ( dsvDepthBuffer )
 		dsvDepthBuffer->Release();
 	dsvDepthBuffer = 0;
-	if (srvDepthBuffer)
-		srvDepthBuffer->Release();
-	srvDepthBuffer = 0;
-	if (texNormal)
+	if ( shaderResourceView[2] )
+		shaderResourceView[2]->Release();
+	shaderResourceView[2] = 0;
+	if ( texNormal )
 		texNormal->Release();
 	texNormal = 0;
-	if (texDiffuse)
+	if ( texDiffuse )
 		texDiffuse->Release();
 	texDiffuse = 0;
-	if (texDepthBuffer)
+	if ( texDepthBuffer )
 		texDepthBuffer->Release();
 	texDepthBuffer = 0;
 }
 
 void Graphics::releaseDeviceSwapchain()
 {
-	if (screenRenderTarget)
+	if ( screenRenderTarget )
 		screenRenderTarget->Release();
 	screenRenderTarget = 0;
-	if (immediateContext)
+	if ( immediateContext )
 		immediateContext->Release();
 	immediateContext = 0;
-	if (swapChain)
+	if ( swapChain )
 		swapChain->Release();
 	swapChain = 0;
-	if (device)
+	if ( device )
 		device->Release();
 	device = 0;
 }

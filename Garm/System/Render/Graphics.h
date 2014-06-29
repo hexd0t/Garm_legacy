@@ -40,9 +40,7 @@ namespace Garm
 				ID3D11Texture2D* texNormal;
 				ID3D11RenderTargetView* renderTargetViews[2];
 				ID3D11DepthStencilView* dsvDepthBuffer;
-				ID3D11ShaderResourceView* srvDiffuse;
-				ID3D11ShaderResourceView* srvNormal;
-				ID3D11ShaderResourceView* srvDepthBuffer;
+				ID3D11ShaderResourceView* shaderResourceView[3];
 
 				// Render states
 				ID3D11DepthStencilState* depthStencilState;
@@ -59,6 +57,7 @@ namespace Garm
 				ID3D11VertexShader* composeVS;
 				ID3D11InputLayout* composeInputLayout;
 				ID3D11Buffer* fullscreenQuad;
+				ID3D11SamplerState* composeSampler;
 				struct ComposeVertexType
 				{
 					XMFLOAT3 pos;
