@@ -58,8 +58,7 @@ void Graphics::Render()
 	immediateContext->PSSetShader( composePS, NULL, 0 );
 
 	immediateContext->PSSetSamplers( 0, 1, &composeSampler );
-	immediateContext->PSSetShaderResources( 0, 1, &shaderResourceView[0] );
-	immediateContext->PSSetShaderResources( 1, 1, &shaderResourceView[1] );
+	immediateContext->PSSetShaderResources( 0, 3, shaderResourceView );
 
 	unsigned int stride = sizeof(ComposeVertexType);
 	unsigned int offset = 0U;

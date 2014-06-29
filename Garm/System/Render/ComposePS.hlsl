@@ -11,6 +11,6 @@ struct ComposePixelInput
 
 float4 main( ComposePixelInput inp ) : SV_TARGET
 {
-	return (texDiffuse.Sample(textureSampler, inp.tex) * 1) 
+	return (texDiffuse.Sample( textureSampler, inp.tex ) * 1);
 		   //(texNormal.Sample(textureSampler, inp.tex) * 0.3);
 }
