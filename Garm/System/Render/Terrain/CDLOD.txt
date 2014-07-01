@@ -1,0 +1,2 @@
+Terrain rendering based on CDLOD-Algorithm by Filip Strugar
+http://www.vertexasylum.com/downloads/cdlod/cdlod_latest.pdf

@@ -95,17 +95,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Data\PhysicsEntity.cpp" />
+    <ClCompile Include="Data\Terrain.cpp" />
+    <ClCompile Include="Data\World.cpp" />
+    <ClCompile Include="Dependencies\lodePNG\lodepng.cpp" />
     <ClCompile Include="System\Engine.cpp" />
     <ClCompile Include="System\Render\Graphics.cpp" />
+    <ClCompile Include="System\Render\Terrain\QuadTree.cpp" />
     <ClCompile Include="Win.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Data\PhysicsEntity.h" />
+    <ClInclude Include="Data\Terrain.h" />
     <ClInclude Include="Data\World.h" />
+    <ClInclude Include="Dependencies\lodePNG\lodepng.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="System\Engine.h" />
     <ClInclude Include="System\Render\Graphics.h" />
+    <ClInclude Include="System\Render\Terrain\QuadTree.h" />
     <ClInclude Include="Win.h" />
     <ClInclude Include="TypeDefs.h" />
   </ItemGroup>
@@ -129,6 +136,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="System\Render\Terrain\CDLOD.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

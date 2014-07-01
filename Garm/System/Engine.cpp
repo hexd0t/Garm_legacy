@@ -5,7 +5,7 @@ using Garm::System::Engine;
 
 Engine::Engine() : World(), Graphics()
 {
-
+	
 }
 
 Engine::~Engine()
@@ -17,7 +17,8 @@ void Engine::Run()
 {
 	HWND window = Garm::Win32::CreateOutputWindow( L"Garm workbench" );
 
-	Graphics = shared_ptr<Garm::System::Render::Graphics>( new Garm::System::Render::Graphics( window ) );
+	World.reset( new Garm::Data::World() );
+	Graphics.reset( new Garm::System::Render::Graphics( window ) );
 
 	while (Garm::Win32::GetMessages())
 	{

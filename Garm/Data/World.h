@@ -1,10 +1,11 @@
-#ifndef WORLD_H
-#define WORLD_H
+#ifndef DATA_WORLD_H
+#define DATA_WORLD_H
 
 #include <map>
 #include <memory>
 #include "../TypeDefs.h"
 #include "PhysicsEntity.h"
+#include "Terrain.h"
 
 using std::map;
 using std::shared_ptr;
@@ -17,8 +18,10 @@ namespace Garm
 		class World
 		{
 		public:
+			World();
+			virtual ~World();
 			map<entityId, shared_ptr<PhysicsEntity>> physics;
-
+			shared_ptr<Terrain> terrain;
 		};
 	}
 }

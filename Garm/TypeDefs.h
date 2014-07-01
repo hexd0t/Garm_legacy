@@ -1,5 +1,5 @@
-#ifndef TYPEDEFS_H
-#define TYPEDEFS_H
+#ifndef GARM_TYPEDEFS_H
+#define GARM_TYPEDEFS_H
 
 #define S(x) #x
 #define S_(x) S(x)

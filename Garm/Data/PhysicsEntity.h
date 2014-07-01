@@ -1,5 +1,5 @@
-#ifndef PHYSICSENTITY_H
-#define PHYSICSENTITY_H
+#ifndef DATA_PHYSICSENTITY_H
+#define DATA_PHYSICSENTITY_H
 
 #include <DirectXMath.h>
 

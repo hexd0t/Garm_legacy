@@ -100,12 +100,17 @@ void Graphics::createDeviceSwapchain( const HWND& window )
 #if defined(_DEBUG)
 	result = D3D11CreateDeviceAndSwapChain( NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, &featureLevel, 1,
 		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext );
+	if (FAILED( result ))
+		throw std::runtime_error( "Unable to create D3D device @" __FILE__ ":" S__LINE__ );
+	result = device->QueryInterface( __uuidof(ID3D11Debug), reinterpret_cast<void**>(&dbgDev) );
+	if (FAILED( result ))
+		throw std::runtime_error( "Unable to create D3D debug device @" __FILE__ ":" S__LINE__ );
 #else
 	result = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1,
-		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext);
-#endif
-	if ( FAILED( result ) )
+		D3D11_SDK_VERSION, &swapChainDesc, &swapChain, &device, NULL, &immediateContext );
+	if (FAILED( result ))
 		throw std::runtime_error( "Unable to create D3D device @" __FILE__ ":" S__LINE__ );
+#endif
 
 	ID3D11Texture2D* backBufferPtr;
 	result = swapChain->GetBuffer( 0, __uuidof(ID3D11Texture2D), (LPVOID*)&backBufferPtr );
@@ -289,7 +294,7 @@ void Graphics::createShader()
 	createShader_compose();
 	createShader_fullscreenQuad();
 }
-#include <iostream>
+
 void Graphics::createShader_scene()
 {
 	HRESULT result = 0;
@@ -475,6 +480,9 @@ void Graphics::createShader_fullscreenQuad()
 
 void Graphics::releaseShader()
 {
+	if (composeSampler)
+		composeSampler->Release();
+	composeSampler = 0;
 	if ( fullscreenQuad )
 		fullscreenQuad->Release();
 	fullscreenQuad = 0;
@@ -546,12 +554,26 @@ void Graphics::releaseDeviceSwapchain()
 	if ( screenRenderTarget )
 		screenRenderTarget->Release();
 	screenRenderTarget = 0;
-	if ( immediateContext )
+	if (immediateContext)
+	{
+		immediateContext->ClearState();//So objects will get deleted now
+		immediateContext->Flush();
 		immediateContext->Release();
+	}
 	immediateContext = 0;
 	if ( swapChain )
 		swapChain->Release();
 	swapChain = 0;
+
+#if defined(_DEBUG)
+	if (dbgDev)
+	{
+		dbgDev->ReportLiveDeviceObjects( D3D11_RLDO_DETAIL );
+		dbgDev->Release();
+	}
+	dbgDev = 0;
+#endif
+
 	if ( device )
 		device->Release();
 	device = 0;

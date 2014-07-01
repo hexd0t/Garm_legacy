@@ -1,5 +1,5 @@
-#ifndef GRAPHICS_H
-#define GRAPHICS_H
+#ifndef SYSTEM_RENDER_GRAPHICS_H
+#define SYSTEM_RENDER_GRAPHICS_H
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -33,6 +33,9 @@ namespace Garm
 				ID3D11DeviceContext* immediateContext;
 				IDXGISwapChain* swapChain;
 				ID3D11RenderTargetView* screenRenderTarget;
+#if defined(_DEBUG)
+				ID3D11Debug* dbgDev;
+#endif
 
 				// GBuffer Textures & accessors
 				ID3D11Texture2D* texDepthBuffer;
