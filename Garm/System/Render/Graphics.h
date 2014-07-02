@@ -7,12 +7,14 @@
 #include <d3dcommon.h>
 #include <d3d11.h>
 #include <DirectXMath.h>
+#include <DirectXCollision.h>
 #include <memory>
 #include "../../TypeDefs.h"
 
 using DirectX::XMMATRIX;
 using DirectX::XMFLOAT3;
 using DirectX::XMFLOAT2;
+using DirectX::BoundingFrustum;
 
 namespace Garm
 {
@@ -23,7 +25,7 @@ namespace Garm
 			class Graphics
 			{
 			public:
-				Graphics(const HWND& window);
+				Graphics( const HWND& window );
 				virtual ~Graphics();
 
 				void Render();
@@ -51,6 +53,7 @@ namespace Garm
 				D3D11_VIEWPORT viewport;
 				XMMATRIX matProjection;
 				XMMATRIX matView;
+				BoundingFrustum frustum;
 
 				// Shader & fullscreen Quad
 				ID3D11PixelShader* scenePS;
@@ -69,14 +72,19 @@ namespace Garm
 
 				// Initialization functions
 				void createDeviceSwapchain( const HWND& window );
-				void createGBuffer(int width, int height);
-				void createGBuffer_textures(int width, int height);
+				void createGBuffer( int width, int height );
+				void createGBuffer_textures( int width, int height );
 				void createGBuffer_views();
 				void createRenderState();
 				void createShader();
 				void createShader_scene();
 				void createShader_compose();
 				void createShader_fullscreenQuad();
+
+				// Render functions
+				void renderUpdateState();
+				void renderScene();
+				void renderCompose();
 
 				// Shutdown functions
 				void releaseShader();

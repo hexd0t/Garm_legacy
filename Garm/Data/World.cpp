@@ -2,7 +2,7 @@
 
 using Garm::Data::World;
 
-World::World() : physics(), terrain( Garm::Data::Terrain("map.png") )
+World::World() : physics(), terrain(Garm::Data::Terrain("map.png")), camera()
 {
 
 }

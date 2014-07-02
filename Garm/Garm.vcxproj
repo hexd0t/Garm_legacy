@@ -94,6 +94,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Data\Camera.cpp" />
     <ClCompile Include="Data\PhysicsEntity.cpp" />
     <ClCompile Include="Data\Terrain.cpp" />
     <ClCompile Include="Data\World.cpp" />
@@ -105,6 +106,7 @@
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Data\Camera.h" />
     <ClInclude Include="Data\PhysicsEntity.h" />
     <ClInclude Include="Data\Terrain.h" />
     <ClInclude Include="Data\World.h" />

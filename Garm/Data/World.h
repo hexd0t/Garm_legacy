@@ -6,6 +6,7 @@
 #include "../TypeDefs.h"
 #include "PhysicsEntity.h"
 #include "Terrain.h"
+#include "Camera.h"
 
 using std::map;
 using std::shared_ptr;
@@ -22,6 +23,7 @@ namespace Garm
 			virtual ~World();
 			map<entityId, shared_ptr<PhysicsEntity>> physics;
 			shared_ptr<Terrain> terrain;
+			shared_ptr<Garm::Data::Camera> camera;
 		};
 	}
 }

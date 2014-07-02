@@ -478,6 +478,11 @@ void Graphics::createShader_fullscreenQuad()
 		throw std::runtime_error( "Unable to create compose texture sampler @" __FILE__ ":" S__LINE__ );
 }
 
+void Graphics::renderUpdateState()
+{
+
+}
+
 void Graphics::releaseShader()
 {
 	if (composeSampler)
