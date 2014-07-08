@@ -15,6 +15,7 @@ Camera::~Camera()
 
 void Camera::Update( XMVECTOR loc )
 {
+	using namespace DirectX;
 #if defined(_DEBUG)
 	if (loc.m128_f32[3] != 1.0f)
 		throw std::runtime_error( "Got location vector with 4 component != 1 @" __FILE__ ":" S__LINE__ );
@@ -40,6 +41,7 @@ void Camera::Update( XMVECTOR loc, float azimuth, float altitude )
 	if (loc.m128_f32[3] != 1.0f)
 		throw std::runtime_error( "Got location vector with 4 component != 1 @" __FILE__ ":" S__LINE__ );
 #endif
+	using namespace DirectX;
 	location = loc;
 	lookAt = loc +
 		(DirectX::XMVectorSet( DirectX::XMScalarSin( azimuth ), DirectX::XMScalarCos( azimuth ), 1.0f, 0.0f )

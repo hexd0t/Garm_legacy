@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include "../../../Data/Terrain.h"
+#include <DirectXMath.h>
+#include <DirectXCollision.h>
 
 namespace Garm
 {
@@ -16,12 +18,21 @@ namespace Garm
 				class QuadTree
 				{
 				public:
-					QuadTree(const std::shared_ptr<Garm::Data::Terrain>& terrain);
+					QuadTree(const Garm::Data::Terrain& terrain, int levels);
 					virtual ~QuadTree();
-					std::vector<std::vector<float>> QuadsMaxHeight;
-					std::vector<std::vector<float>> QuadsMinHeight;
 					
 				private:
+					class Quad
+					{
+					public:
+						Quad( float minX, float minY, float minZ, float maxX, float maxY, float maxZ );
+						Quad( std::unique_ptr<Quad>&& subA, std::unique_ptr<Quad>&& subB, std::unique_ptr<Quad>&& subC, std::unique_ptr<Quad>&& subD );
+						virtual ~Quad();
+						DirectX::BoundingBox Box;
+						std::unique_ptr<Quad> Subquads[4];
+					};
+					std::unique_ptr<Quad> quads;
+					std::unique_ptr<Quad> generateQuads( const Garm::Data::Terrain& terrain, unsigned int startX, unsigned int startZ, unsigned int endX, unsigned int endZ, int levels );
 				};
 			}
 		}
